@@ -1,0 +1,7 @@
+.vs/
+MindfullMinuteFrontend/
+bin/
+obj/
+*.user
+*.suo
+*.log

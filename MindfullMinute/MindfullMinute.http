@@ -1,0 +1,6 @@
+@MindfullMinute_HostAddress = http://localhost:5236
+
+GET {{MindfullMinute_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
