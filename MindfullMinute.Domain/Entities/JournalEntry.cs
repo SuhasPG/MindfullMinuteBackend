@@ -10,7 +10,7 @@ namespace MindfullMinute.Domain.Entities
         public required string Title { get; set; }
         public required string Content { get; set; }
         public required string MoodEmoji { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; //added now
+        public DateTime CreatedAt { get; set; } = DateTime.Now; //added now
 
         public string UserId { get; set; }
         public IdentityUser User { get; set; }

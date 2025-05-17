@@ -28,7 +28,9 @@ namespace MindfullMinute.API.Controllers
         {
             var userId = _userManager.GetUserId(User);
             var id = await _journalService.CreateJournalEntryAsync(dto, userId);
-            return Ok(new { Id = id });
+            var details = await _journalService.GetUserJournalEntryByIdAsync(userId, id);
+
+            return Ok(details);
         }
 
         [HttpGet]
@@ -39,6 +41,15 @@ namespace MindfullMinute.API.Controllers
             return Ok(entries);
         }
 
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var userId = _userManager.GetUserId(User);
+            var entryById = await _journalService.GetUserJournalEntryByIdAsync(userId, id);
+            return Ok(entryById);
+        }
+
         [HttpGet("streak")]
         public async Task<IActionResult> GetStreak()
         {
@@ -47,6 +58,26 @@ namespace MindfullMinute.API.Controllers
             return Ok(streak);
         }
 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var userId = _userManager.GetUserId(User);
+            var entry = await _journalService.GetUserJournalEntryByIdAsync(userId, id);
+            if (entry == null)
+            {
+                return NotFound();
+            }
+            await _journalService.DeleteJournalEntryAsync(userId, id);
+            return NoContent();
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] JournalEntryDto journalEntryDto)
+        {
+            var userId = _userManager.GetUserId(User);
+            var data = await _journalService.UpdateEntry(userId, id,  journalEntryDto);
+            return Ok(data);
+        }
 
     }
 }

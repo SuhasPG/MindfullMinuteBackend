@@ -62,17 +62,40 @@ namespace MindfullMinute.Infrastructure.Services
             return entry.Id;
         }
 
+        public Task DeleteJournalEntryAsync(string userId, int id)
+        {
+            return _context.JournalEntries
+                .Where(j => j.Id == id && j.UserId == userId)
+                .ExecuteDeleteAsync();
+        }
+
         public async Task<List<JournalDetailsDto>> GetUserJournalEntriesAsync(string userId)
         {
             return await _context.JournalEntries
                 .Where(j => j.UserId == userId)
                 .Select(j => new JournalDetailsDto
                 {
+                    Id = j.Id,
                     Title = j.Title,
                     Content = j.Content,
                     MoodEmoji = j.MoodEmoji,
                     CreatedAt = j.CreatedAt
                 }).ToListAsync();
+        }
+
+        public async Task<JournalDetailsDto> GetUserJournalEntryByIdAsync(string userId, int id)
+        {
+            return await _context.JournalEntries
+                .Where(j => j.Id == id && j.UserId == userId)
+                .Select(j => new JournalDetailsDto
+                {
+                    Id = j.Id,
+                    Title = j.Title,
+                    Content = j.Content,
+                    MoodEmoji = j.MoodEmoji,
+                    CreatedAt = j.CreatedAt
+
+                }).FirstOrDefaultAsync();
         }
 
         public async Task<StreaksDto> GetUserStreakAsync(string userId)
@@ -86,6 +109,35 @@ namespace MindfullMinute.Infrastructure.Services
 
 
         }
-    }
 
+
+        public async Task<JournalDetailsDto> UpdateEntry(string userId, int id, JournalEntryDto journalEntryDto)
+        {
+            var index = await _context.JournalEntries.FindAsync(id);
+            if (index == null)
+            {
+                throw new Exception("Entry not found");
+            }
+            if (index.UserId != userId)
+            {
+                throw new Exception("You are not authorized to update this entry");
+            }
+            index.Title = journalEntryDto.Title;
+            index.Content = journalEntryDto.Content;
+            index.MoodEmoji = journalEntryDto.MoodEmoji;
+
+            await _context.SaveChangesAsync();
+
+            return new JournalDetailsDto
+            {
+                Id = index.Id,
+                Title = index.Title,
+                Content = index.Content,
+                MoodEmoji = index.MoodEmoji,
+                CreatedAt = index.CreatedAt
+            };
+
+        }
+
+    }
 }
