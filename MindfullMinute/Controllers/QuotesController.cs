@@ -33,7 +33,7 @@ namespace MindfullMinute.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<IEnumerable<QuotesFetchDto>>> GetQuotesById(int id)
+        public async Task<ActionResult<QuotesFetchDto>> GetQuoteById(int id)
         {
             var quote = await _context.Quotes
                 .Where(q => q.Id == id)
@@ -42,13 +42,16 @@ namespace MindfullMinute.API.Controllers
                     Text = q.Text,
                     Author = q.Author
                 })
-                .ToListAsync();
-            if(quote.Count == 0)
+                .FirstOrDefaultAsync();
+
+            if (quote == null)
             {
                 return NotFound();
             }
+
             return Ok(quote);
         }
+
 
         [HttpGet("Count")]
         public async Task<int> GetNumberOfQuotesStored()
