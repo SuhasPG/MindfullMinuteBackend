@@ -49,7 +49,7 @@ app.UseCors("AllowAngularApp");
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication(); // Optional, but often needed
+app.UseAuthentication(); 
 app.UseAuthorization();
 
 app.MapIdentityApi<IdentityUser>().RequireCors("AllowAngularApp");

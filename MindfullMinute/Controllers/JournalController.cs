@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -26,12 +27,32 @@ namespace MindfullMinute.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] JournalEntryDto dto)
         {
-            var userId = _userManager.GetUserId(User);
-            var id = await _journalService.CreateJournalEntryAsync(dto, userId);
-            var details = await _journalService.GetUserJournalEntryByIdAsync(userId, id);
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
 
-            return Ok(details);
+                return BadRequest(new { Errors = errors });
+            }
+
+            var userId = _userManager.GetUserId(User);
+            if (userId == null)
+                return Unauthorized("User is not logged in.");
+
+            try
+            {
+                var id = await _journalService.CreateJournalEntryAsync(dto, userId);
+                var details = await _journalService.GetUserJournalEntryByIdAsync(userId, id);
+                return Ok(details);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"An unexpected error occurred: {ex.Message}");
+            }
         }
+
 
         [HttpGet]
         public async Task<IActionResult> Get()
@@ -62,20 +83,47 @@ namespace MindfullMinute.API.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var userId = _userManager.GetUserId(User);
-            var entry = await _journalService.GetUserJournalEntryByIdAsync(userId, id);
-            if (entry == null)
+
+            if (userId == null)
             {
-                return NotFound();
+                return Unauthorized("User is not logged in.");
             }
-            await _journalService.DeleteJournalEntryAsync(userId, id);
-            return NoContent();
+
+            try
+            {
+                var entry = await _journalService.GetUserJournalEntryByIdAsync(userId, id);
+                if (entry == null)
+                {
+                    return NotFound();
+                }
+
+                await _journalService.DeleteJournalEntryAsync(userId, id);
+                return Ok("Item Deleted Successfully");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
+
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] JournalEntryDto journalEntryDto)
         {
+
             var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Unauthorized("User is not logged in.");
+            }
+
             var data = await _journalService.UpdateEntry(userId, id,  journalEntryDto);
+
             return Ok(data);
         }
 

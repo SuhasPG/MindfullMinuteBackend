@@ -5,6 +5,7 @@ using MindfullMinute.Domain.Entities;
 using MindfullMinute.Infrastructure.Data;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,6 +30,10 @@ namespace MindfullMinute.Infrastructure.Services
 
         public async Task<int> CreateJournalEntryAsync(JournalEntryDto dto, string userId)
         {
+            if (userId == null)
+            {
+                throw new UnauthorizedAccessException();
+            }
             var entry = new JournalEntry
             {
                 Title = dto.Title,
@@ -36,6 +41,14 @@ namespace MindfullMinute.Infrastructure.Services
                 MoodEmoji = dto.MoodEmoji,
                 UserId = userId
             };
+
+            var context = new ValidationContext(entry);
+            var results = new List<ValidationResult>();
+            if (!Validator.TryValidateObject(entry, context, results, true))
+            {
+                var errors = string.Join("; ", results.Select(e => e.ErrorMessage));
+                throw new ValidationException(errors);
+            }
 
             _context.JournalEntries.Add(entry);
 
@@ -58,12 +71,18 @@ namespace MindfullMinute.Infrastructure.Services
                 _streakService.UpdateStreak(streak, entry.CreatedAt);
                 _context.Streaks.Update(streak);
             }
+
             await _context.SaveChangesAsync();
+
             return entry.Id;
         }
 
         public Task DeleteJournalEntryAsync(string userId, int id)
         {
+            if(userId == null)
+            {
+                throw new UnauthorizedAccessException();
+            }
             return _context.JournalEntries
                 .Where(j => j.Id == id && j.UserId == userId)
                 .ExecuteDeleteAsync();

@@ -43,6 +43,10 @@ namespace MindfullMinute.API.Controllers
                     Author = q.Author
                 })
                 .ToListAsync();
+            if(quote.Count == 0)
+            {
+                return NotFound();
+            }
             return Ok(quote);
         }
 
